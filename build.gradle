@@ -1,0 +1,51 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.1.RELEASE")
+        classpath files('db/DynamoDBLocal.jar')
+        classpath fileTree(dir: 'db/DynamoDBLocal_lib', include: '*.jar')
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'spring-boot'
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'http://repo.opensourceagility.com/release'
+    }
+}
+
+ext {
+    springBootVersion = '1.2.5.RELEASE'
+}
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+    compile 'com.amazonaws:aws-java-sdk-dynamodb:1.10.8'
+    compile 'org.socialsignin:spring-data-dynamodb:1.0.2.RELEASE'
+
+    testCompile "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+}
+
+def dynamoDBServer
+def process
+
+test {
+    doFirst {
+        process = "java -Djava.library.path=./DynamoDBLocal_lib -jar ${project.rootDir}/db/DynamoDBLocal.jar -inMemory -port 9393".execute()
+    }
+    doLast {
+        process.destroyForcibly()
+    }
+
+    outputs.upToDateWhen { false }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.3'
+}
